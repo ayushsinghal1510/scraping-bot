@@ -1,15 +1,22 @@
-**Objective:** Generate a response meticulously structured into specific, clearly demarcated sections with proper headings, addressing the provided topic and specific focus. The response must be clear, systematic, and rigorously cited.
+**Objective:**
+1.  Generate a response meticulously structured into specific, clearly demarcated sections with proper headings, addressing the provided `{topic}` and `{specific_focus}`. The response must be clear, systematic, and rigorously cited according to the structure below.
+2.  Analyze the user's query (`{topic}` and `{specific_focus}`) and classify it into one or more relevant categories from the predefined list: `satellite`, `general_question`.
+3.  Package the generated structured response and the classification(s) into a single JSON object as the final output.
 
 **Your Task:**
-Construct your output strictly adhering to the following structure, using the specified Markdown headings precisely as shown. Ensure content within each section is relevant and meets the requirements outlined below.
+First, construct the structured textual response. Second, determine the appropriate category/categories for the input query. Third, combine these into the specified JSON format.
 
-**Required Output Structure and Content:**
+**Part 1: Structured Response Generation**
+
+Construct your textual output strictly adhering to the following structure, using the specified Markdown headings precisely as shown. Ensure content within each section is relevant and meets the requirements outlined below.
+
+**Required Textual Output Structure and Content:**
 
 ## Background
 
 *   **Heading Requirement:** Use the exact heading `## Background`.
 *   **Content:** Provide concise contextual information relevant to the `{topic}` and `{specific_focus}`. This may include essential definitions, brief historical context, or foundational concepts needed for understanding the subsequent analysis.
-*   **Citation:** Factual statements must be supported by evidence, with citations referring to the "Sources/Citations" section.(limit to 3 only)
+*   **Citation:** Factual statements must be supported by evidence, with citations referring to the "Sources/Citations" section (limit to 3 unique sources recommended for brevity unless essential).
 
 ## Response
 
@@ -26,8 +33,38 @@ Construct your output strictly adhering to the following structure, using the sp
 *   **Content:** List all sources cited in the "Background" and "Response" sections.
 *   **Format:** Use a consistent citation style (e.g., APA, MLA, Chicago, Vancouver, Numbered). State the style used if possible. Ensure perfect correspondence between in-text citations and this list.
 
-**Input Placeholders:**
+**Input Placeholders for Response Generation:**
 *   `{topic}`: The general subject area, concept, or entity to be discussed.
 *   `{specific_focus}`: The specific sub-topic, question(s), elements to compare, criteria, or perspective for the "Response" section.
 
-**Execution Mandate:** Generate the response following these structural and formatting requirements precisely. Failure to use the specified headings and appropriate sub-headings will result in an inadequate response.
+**Part 2: Query Classification**
+
+*   **Analyze:** Based on the provided `{topic}` and `{specific_focus}`, determine the most fitting category/categories.
+*   **Allowed Categories:** You **must** choose from the following list only:
+    *   `satellite`
+    *   `general_question`
+*   **Selection:** You can select one or multiple categories if applicable. If unsure or if it doesn't fit well, lean towards `general_question`. Do not use any categories not present in this list.
+
+**Part 3: Final Output Format**
+
+*   **Format Requirement:** Your entire output **must** be a single JSON object.
+*   **Structure:** The JSON object must have exactly two keys:
+    *   `'response'`: The value should be a single string containing the complete, structured Markdown text generated in Part 1 (including all headings, content, and citations). Use appropriate JSON string escaping for any special characters within the Markdown (like newlines `\n`, quotes `\"`).
+    *   `'category'`: The value should be a JSON list (array) containing the string(s) of the selected category/categories from Part 2.
+
+**Example JSON Output Structure:**
+```json
+{
+  "response": "## Background\\n...\\n\\n## Response\\n### Sub-heading 1\\n...\\n\\n## Sources/Citations\\n...",
+  "category": ["satellite"]
+}
+```
+OR
+```json
+{
+  "response": "## Background\\n...\\n\\n## Response\\n### Analysis Point\\n...\\n\\n## Sources/Citations\\n...",
+  "category": ["general_question"]
+}
+```
+
+**Execution Mandate:** Generate the structured response as described, classify the query using *only* the allowed categories, and return the final result strictly in the specified JSON format. Failure to adhere to any part of this mandate, especially the output format and classification constraints, will result in an inadequate response.

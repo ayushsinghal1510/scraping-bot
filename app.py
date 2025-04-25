@@ -220,6 +220,9 @@ Query : {query}
     })
 
     response = await run_groq(history , groq_client , llm_model)
+    response = json.loads(response)
+    categories = response['category']
+    response = response['response']
     # response = 'this is a sample respone'
 
     history.append({
@@ -232,7 +235,7 @@ Query : {query}
         'time' :  str(datetime.now()) , 
         'token_count' : len(tokenizer(query)['input_ids']) , 
         'sentiment' : sentiment_pipeline(query)[0]['score'] , 
-        'category' : []
+        'category' : categories
     }))
     
     db_redis_client.rpush('response' , json.dumps({
