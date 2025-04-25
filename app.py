@@ -10,6 +10,7 @@ import os
 from sentence_transformers import SentenceTransformer
 
 import google.generativeai as genai
+from tqdm import tqdm
 import json
 from groq import Groq 
 
@@ -19,9 +20,17 @@ from scripts.scrapper.pdf import pdf_to_docs
 from scripts.llm.services import save_history , load_history
 from scripts.llm.runner import run_groq
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 from dotenv import load_dotenv
 load_dotenv()
+
+from transformers import AutoTokenizer
+from transformers import pipeline
+
+sentiment_pipeline = pipeline('sentiment-analysis')
+
+tokenizer = AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3-8B')
 
 db_name = os.getenv('MILVUS_DB_NAME' , '')
 
@@ -39,9 +48,16 @@ msg.good('Milvus Client Loaded')
 
 spinner = Halo(text = 'Loading Redit Client' , spinner = 'dots')
 spinner.start()
-redis_client = Redis(
+chat_redis_client = Redis(
     host = os.getenv('REDIS_HOST' , 'localhost') ,  
-    port = int(os.getenv('REDIS_PORT' , 6379)) ,  
+    port = int(os.getenv('REDIS_PORT' , 6379)) , 
+    db = 0  , 
+    decode_responses = True
+)
+db_redis_client = Redis(
+    host = os.getenv('REDIS_HOST' , 'localhost') ,  
+    port = int(os.getenv('REDIS_PORT' , 6379)) , 
+    db = 1 ,  
     decode_responses = True
 )
 spinner.stop()
@@ -64,7 +80,7 @@ msg.good('Embedding Model Loaded')
 spinner = Halo(text = 'Loading GROQ Client' , spinner = 'dots')
 spinner.start()
 groq_client = Groq()
-llm_model = os.getenv('GROQ_MODEL')
+llm_model = os.getenv('GROQ_MODEL' , '')
 # groq_client = ''
 spinner.stop()
 msg.good('GROQ Model Loaded')
@@ -170,8 +186,6 @@ async def ask(request : Request) :
     query = request['query']
     session_id = request['session_id']
 
-    print(session_id)
-
     query_embeddings = embedding_model.encode(query)
 
     results = milvus_client.search(
@@ -181,15 +195,13 @@ async def ask(request : Request) :
         output_fields = ['text' , 'source']
     )
 
-    # print(json.dumps(results , indent = 4))
-
     results = results[0]
 
     context = '\n'.join([f'''Content : {row['entity']['text']} + {row['entity']['source']}''' for row in results])
 
     with open('assets/database/prompt/rag.md') as rag_prompt_file : prompt = rag_prompt_file.read()
 
-    history = await load_history(redis_client , session_id)
+    history = await load_history(chat_redis_client , session_id)
 
     if history == [] : history = [
         {
@@ -214,23 +226,111 @@ Query : {query}
         'role' : 'assistant' , 
         'content' : response
     })
+    
+    db_redis_client.rpush('query' , json.dumps({
+        'query' : query , 
+        'time' :  str(datetime.now()) , 
+        'token_count' : len(tokenizer(query)['input_ids']) , 
+        'sentiment' : sentiment_pipeline(query)[0]['score'] , 
+        'category' : []
+    }))
+    
+    db_redis_client.rpush('response' , json.dumps({
+        'query' : query , 
+        'time' :  str(datetime.now()) , 
+        'token_count' : len(tokenizer(response)['input_ids']) , 
+    }))
 
-    await save_history(redis_client , history , session_id)
+    await save_history(chat_redis_client , history , session_id)
 
     return {'response' : response}
 
-@app.post('/update-image-prompt')
-async def update_image_prompt(request : Request) : 
+@app.get('/number-of-queries')
+async def number_of_queries() : 
+    
+    nqueries = db_redis_client.lrange('query' , 0 , -1)
+    
+    return {'nqueries' : nqueries}
 
-    request = await request.json()
+@app.get('/sentiment')
+async def get_sentiment() : 
 
-    prompt = request['prompt']
+    nqueries = db_redis_client.lrange('query' , 0 , -1)
+    
+    nqueries_ = {'time' : [] , 'sentiment' : []}
+    
+    for nthquery in tqdm(nqueries , total = len(nqueries)) : 
+        
+        try : 
+            
+            data = json.loads(nthquery)
+            
+            nqueries_['time'].append(data['time'])
+            nqueries_['sentiment'].append(data['sentiment'])
 
-    if '{}' not in prompt : return {'Error' : 'Prompt should contain {}'}
+        except Exception as e : print(e)
+            
+    return {'nqueries' : nqueries_}
 
-    with open('assets/database/prompt/image_ingestion.md' , 'w') as image_ingestion_prompt_file : image_ingestion_prompt_file.write(prompt)
+@app.get('/token-count')
+async def get_token_count() : 
 
-    return {'Prompt Updated Successfully'}
+    nqueries = db_redis_client.lrange('query' , 0 , -1)
+    nresponses = db_redis_client.lrange('response' , 0 , -1)
+    
+    nqueries_ = {'time' : [] , 'token_count' : []}
+    nresponses_ = {'time' : [] , 'token_count' : []}
+    
+    for nthquery in tqdm(nqueries , total = len(nqueries)) : 
+        
+        try : 
+            
+            data = json.loads(nthquery)
+            
+            nqueries_['time'].append(data['time'])
+            nqueries_['token_count'].append(data.get('token_count'))
+
+        except Exception as e : print(e)
+
+    for nthresponse in tqdm(nresponses , total = len(nresponses)) : 
+        
+        try : 
+            
+            data = json.loads(nthresponse)
+            
+            nresponses_['time'].append(data['time'])
+            nresponses_['token_count'].append(data.get('token_count'))
+
+        except Exception as e : print(e)
+    
+    return {
+        'nqueries' : nqueries_ , 
+        'nresponses' : nresponses_
+    }
+
+
+@app.get('/category')
+async def get_category() : 
+
+    nqueries = db_redis_client.lrange('query' , 0 , -1)
+    
+    nqueries_ = {'time' : [] , 'category' : []}
+    
+    for nthquery in tqdm(nqueries , total = len(nqueries)) : 
+        
+        try : 
+            
+            data = json.loads(nthquery)
+            
+            nqueries_['time'].append(data['time'])
+            nqueries_['category'].append(data.get('category'))
+
+        except Exception as e : print(e)
+    
+    return {'nqueries' : nqueries_}
+
+
+
 
 
 if __name__ == '__main__' : uvicorn.run(
