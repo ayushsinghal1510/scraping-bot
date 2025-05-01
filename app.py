@@ -1,11 +1,9 @@
-from fastapi import FastAPI , Request 
+from fastapi import FastAPI , Request , HTTPException 
 from pymilvus import MilvusClient
 from redis import Redis 
 from uuid import uuid4 
 
 import uvicorn
-from halo import Halo
-from wasabi import msg
 import os 
 from sentence_transformers import SentenceTransformer
 
@@ -39,15 +37,10 @@ vector_size = int(os.getenv('MILVUS_MODEL_SIZE' , 384))
 collection_name = os.getenv('MILVUS_COLLECTION_NAME' , '')
 all_docs = {}
 
-spinner = Halo(text = 'Loading Milvus Client' , spinner = 'dots')
-spinner.start()
+
 milvus_client = MilvusClient(db_name)
 milvus_client.create_collection(collection_name = collection_name , dimension = vector_size)
-spinner.stop()
-msg.good('Milvus Client Loaded')
 
-spinner = Halo(text = 'Loading Redit Client' , spinner = 'dots')
-spinner.start()
 chat_redis_client = Redis(
     host = os.getenv('REDIS_HOST' , 'localhost') ,  
     port = int(os.getenv('REDIS_PORT' , 6379)) , 
@@ -60,30 +53,17 @@ db_redis_client = Redis(
     db = 1 ,  
     decode_responses = True
 )
-spinner.stop()
-msg.good('Redit Client Loaded')
 
-spinner = Halo(text = 'Loading Embedding Model' , spinner = 'dots')
-spinner.start()
 embedding_model = SentenceTransformer(model_name)
-spinner.stop()
-msg.good('Embedding Model Loaded')
 
-spinner = Halo(text = 'Loading Gemini Client' , spinner = 'dots')
-spinner.start()
 # genai.configure(api_key = '<Enter the Gemini API Key here>') # ! Can deploy a Llama 3.2 Model and use that instead, which can increase speed and avoid rate limits and increase safety as well
 # image_model = genai.GenerativeModel('gemini-1.5-flash')
 image_model = ''
-spinner.stop()
-msg.good('Embedding Model Loaded')
 
-spinner = Halo(text = 'Loading GROQ Client' , spinner = 'dots')
-spinner.start()
+
 groq_client = Groq()
 llm_model = os.getenv('GROQ_MODEL' , '')
 # groq_client = ''
-spinner.stop()
-msg.good('GROQ Model Loaded')
 
 app = FastAPI()
 app.add_middleware(
@@ -102,151 +82,189 @@ async def scrape_url(request : Request) :
 
     request = await request.json()
 
-    base_html = request['base-html']
-    perm_url = request['perm-url']
+    url = request['url']
+    
+    if url : 
+    
+        pdf_links , all_links = await get_pdf_links(url)
 
-    pdf_links , all_links = await get_pdf_links(base_html , perm_url)
+        return {
+            'pdf_links' : pdf_links , 
+            'all_links' : all_links
+        }
 
-    return {
-        'pdf_links' : pdf_links , 
-        'all_links' : all_links
-    }
+    return HTTPException(
+        status_code = 400 , 
+        detail = 'URL was not supplied'
+    )
 
 @app.post('/scrape-page')
 async def scrape_page(request : Request) : 
 
     request = await request.json()
 
-    url = request['url']
-    scrape_image = request['scrape-images']
+    url = request.get('url')
+    scrape_images = request.get('scrape-images')
 
-    documents = await page_to_docs(url , scrape_image)
-
-    texts = [document['text'] for document in documents]
-    embeddings = embedding_model.encode(texts , show_progress_bar = True)
-
-    for document , embedding in zip(documents , embeddings) : 
-
-        uid = int(str(int(uuid4()))[:5])
-
-        data = {
-            'id' :  uid , # ! Fix this
-            'vector' : embedding
-        }
-
-        all_docs[uid] = document
-
-        for key , value in zip(document.keys() , document.values()) : data[key] = value
-
-        milvus_client.insert(
-            collection_name = collection_name , 
-            data = [data]
+    if (
+        url and (
+            scrape_images == False or 
+            scrape_images == True 
         )
+    ) : 
 
-    return {'Added Docs Successfully'}
+        documents = await page_to_docs(url , scrape_images)
+
+        texts = [document['text'] for document in documents]
+        embeddings = embedding_model.encode(texts , show_progress_bar = True)
+
+        for document , embedding in zip(documents , embeddings) : 
+
+            uid = int(str(int(uuid4()))[:5])
+
+            data = {
+                'id' :  uid , # ! Fix this
+                'vector' : embedding
+            }
+
+            all_docs[uid] = document
+
+            for key , value in zip(document.keys() , document.values()) : data[key] = value
+
+            milvus_client.insert(
+                collection_name = collection_name , 
+                data = [data]
+            )
+
+        return {'Added Docs Successfully'}
+
+    return HTTPException(
+        status_code = 400 , 
+        detail = 'Correct Params was not supplied'
+    )
 
 @app.post('/scrape-pdf')
 async def scrape_pdf(request : Request) :
 
     request = await request.json()
 
-    pdf_link = request['url']
-    scrape_image = request['scrape-image'] # ! use post and error handling/ checks for the server
+    url = request.get('url')
+    scrape_images = request.get('scrape-images') # ! use post and error handling/ checks for the server
 
-    documents = await pdf_to_docs(pdf_link , scrape_image , image_model)
-
-    texts = [document['text'] for document in documents]
-    embeddings = embedding_model.encode(texts , show_progress_bar = True)
-
-    for document , embedding in zip(documents , embeddings) : 
-
-        uid = int(str(int(uuid4()))[:5])
-
-        data = {
-            'id' :  uid , # ! Fix this
-            'vector' : embedding
-        }
-
-        all_docs[uid] = document
-
-        for key , value in zip(document.keys() , document.values()) : data[key] = value
-
-        milvus_client.insert(
-            collection_name = collection_name , 
-            data = [data]
+    if (
+        url and (
+            scrape_images == False or 
+            scrape_images == True 
         )
+    ) : 
 
-    return {'Added Docs Successfully'}
+
+        documents = await pdf_to_docs(url , scrape_images , image_model)
+
+        texts = [document['text'] for document in documents]
+        embeddings = embedding_model.encode(texts , show_progress_bar = True)
+
+        for document , embedding in zip(documents , embeddings) : 
+
+            uid = int(str(int(uuid4()))[:5])
+
+            data = {
+                'id' :  uid , # ! Fix this
+                'vector' : embedding
+            }
+
+            all_docs[uid] = document
+
+            for key , value in zip(document.keys() , document.values()) : data[key] = value
+
+            milvus_client.insert(
+                collection_name = collection_name , 
+                data = [data]
+            )
+
+        return {'Added Docs Successfully'}
+
+    return HTTPException(
+        status_code = 400 , 
+        detail = 'Correct Params was not supplied'
+    )
 
 @app.post('/ask') 
 async def ask(request : Request) : 
 
     request = await request.json()
 
-    query = request['query']
-    session_id = request['session_id']
+    query = request.get('query')
+    session_id = request.get('session_id')
+    
+    if query and session_id : 
 
-    query_embeddings = embedding_model.encode(query)
+        query_embeddings = embedding_model.encode(query)
 
-    results = milvus_client.search(
-        collection_name = collection_name , 
-        data = [query_embeddings] , 
-        limit = 2 , 
-        output_fields = ['text' , 'source']
+        results = milvus_client.search(
+            collection_name = collection_name , 
+            data = [query_embeddings] , 
+            limit = 2 , 
+            output_fields = ['text' , 'source']
+        )
+
+        results = results[0]
+
+        context = '\n'.join([f'''Content : {row['entity']['text']} + {row['entity']['source']}''' for row in results])
+
+        with open('assets/database/prompt/rag.md') as rag_prompt_file : prompt = rag_prompt_file.read()
+
+        history = await load_history(chat_redis_client , session_id)
+
+        if history == [] : history = [
+            {
+                'role' : 'system' , 
+                'content' : prompt
+            }
+        ]
+
+        history.append({
+            'role' : 'user' , 
+            'content' : f'''
+    Context : {context}
+
+    Query : {query}
+            '''
+        })
+
+        response = await run_groq(history , groq_client , llm_model)
+        response = json.loads(response)
+        categories = response['category']
+        response = response['response']
+        # response = 'this is a sample respone'
+
+        history.append({
+            'role' : 'assistant' , 
+            'content' : response
+        })
+        
+        db_redis_client.rpush('query' , json.dumps({
+            'query' : query , 
+            'time' :  str(datetime.now()) , 
+            'token_count' : len(tokenizer(query)['input_ids']) , 
+            'sentiment' : sentiment_pipeline(query)[0]['score'] , 
+            'category' : categories
+        }))
+        
+        db_redis_client.rpush('response' , json.dumps({
+            'query' : query , 
+            'time' :  str(datetime.now()) , 
+            'token_count' : len(tokenizer(response)['input_ids']) , 
+        }))
+
+        await save_history(chat_redis_client , history , session_id)
+
+        return {'response' : response}
+
+    return HTTPException(
+        status_code = 400 , 
+        detail = 'Correct Params was not supplied'
     )
-
-    results = results[0]
-
-    context = '\n'.join([f'''Content : {row['entity']['text']} + {row['entity']['source']}''' for row in results])
-
-    with open('assets/database/prompt/rag.md') as rag_prompt_file : prompt = rag_prompt_file.read()
-
-    history = await load_history(chat_redis_client , session_id)
-
-    if history == [] : history = [
-        {
-            'role' : 'system' , 
-            'content' : prompt
-        }
-    ]
-
-    history.append({
-        'role' : 'user' , 
-        'content' : f'''
-Context : {context}
-
-Query : {query}
-        '''
-    })
-
-    response = await run_groq(history , groq_client , llm_model)
-    response = json.loads(response)
-    categories = response['category']
-    response = response['response']
-    # response = 'this is a sample respone'
-
-    history.append({
-        'role' : 'assistant' , 
-        'content' : response
-    })
-    
-    db_redis_client.rpush('query' , json.dumps({
-        'query' : query , 
-        'time' :  str(datetime.now()) , 
-        'token_count' : len(tokenizer(query)['input_ids']) , 
-        'sentiment' : sentiment_pipeline(query)[0]['score'] , 
-        'category' : categories
-    }))
-    
-    db_redis_client.rpush('response' , json.dumps({
-        'query' : query , 
-        'time' :  str(datetime.now()) , 
-        'token_count' : len(tokenizer(response)['input_ids']) , 
-    }))
-
-    await save_history(chat_redis_client , history , session_id)
-
-    return {'response' : response}
 
 @app.get('/number-of-queries')
 async def number_of_queries() : 

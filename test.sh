@@ -3,11 +3,10 @@
 curl http://localhost:8888/
 
 # Scrape URL Endpoint (/scrape-url)
-curl -X POST http://localhost:8888/scrape-url \
+curl -X POST http://localhost:7860/scrape-url \
 -H "Content-Type: application/json" \
 -d '{
-        "base-html": "http://example.com/exmple.html",
-        "perm-url": "http://example.com"
+        "url": "https://www.nrsc.gov.in/",
     }'
 
 # Scrape Page Endpoint (/scrape-page)

@@ -27,7 +27,7 @@ async def process_page(url) :
 
         if href : yield href
 
-async def get_pdf_links(base_html , perm_url) : 
+async def get_pdf_links(base_html) : 
 
     pdf_links = []
     all_links = set()
@@ -53,7 +53,7 @@ async def get_pdf_links(base_html , perm_url) :
 
                     absolute_url = urljoin(current_url , link)
 
-                    if absolute_url.startswith(perm_url) : 
+                    if absolute_url.startswith(base_html) : 
 
                         if absolute_url not in visited_urls : 
 
