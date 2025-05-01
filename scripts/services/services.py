@@ -11,7 +11,8 @@ async def process_link(href) :
         not href.endswith('bmp') and
         not href.endswith('tiff') and
         not href.endswith('svg') and
-        not href.endswith('webp') # ! Add conditions as needed 
+        not href.endswith('webp') and 
+        not href.endswith('mp4') # ! Add conditions as needed 
     ) : return href
 
     return None
