@@ -5,17 +5,19 @@ from collections import deque
 
 from scripts.services.services import process_link
 
-async def create_soup(url) : 
+async def create_soup(url : str) -> BeautifulSoup : 
 
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.content , 'html.parser')
+    
+    print(type(soup))
 
     return soup
 
-async def process_page(url) : 
+async def process_page(url : str) : 
 
-    soup = await create_soup(url)
+    soup : BeautifulSoup = await create_soup(url)
 
     links = soup.find_all('a' , href = True)
 

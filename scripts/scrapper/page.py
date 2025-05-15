@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from scripts.scrapper.services import create_soup
 from scripts.llm.image import caption_image
 
-async def get_images(soup , url) : 
+async def get_images(soup , url : str) : 
 
     img_tags = soup.find_all('img')
 
@@ -16,7 +16,7 @@ async def get_images(soup , url) :
 
         if img_url : yield urljoin(url , img_url)
 
-async def image_to_bytes(img_url) : 
+async def image_to_bytes(img_url : str) -> bytes : 
 
     img_response = requests.get(img_url , stream = True)
     img_response.raise_for_status()
@@ -25,7 +25,7 @@ async def image_to_bytes(img_url) :
 
     return image_bytes
 
-async def page_to_docs(url , image_model , scrape_image = False) : 
+async def page_to_docs(url : str , image_model , scrape_image = False) -> list : 
 
     documents = []
 
@@ -51,9 +51,9 @@ async def page_to_docs(url , image_model , scrape_image = False) :
 
         async for img_url in get_images(soup , url) :
 
-            image_bytes = image_to_bytes(img_url)
+            image_bytes : bytes = await image_to_bytes(img_url)
 
-            response = caption_image(image_bytes , image_model , text_content)
+            response : str = caption_image(image_bytes , image_model , text_content)
 
             documents.append(
                 {

@@ -3,7 +3,7 @@
 curl http://localhost:8888/
 
 # Scrape URL Endpoint (/scrape-url)
-curl -X POST http://localhost:7860/scrape-url \
+curl -X POST http://localhost:8888/scrape-url \
 -H "Content-Type: application/json" \
 -d '{
         "url": "https://www.nrsc.gov.in/",

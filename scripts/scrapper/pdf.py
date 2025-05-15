@@ -5,7 +5,7 @@ import PyPDF2
 from tqdm import tqdm
 from scripts.llm.image import caption_image
 
-async def download_pdf(pdf_link) : 
+async def download_pdf(pdf_link : str) -> str : 
 
     response = requests.get(pdf_link , stream=True)
     response.raise_for_status()
@@ -19,11 +19,11 @@ async def download_pdf(pdf_link) :
     return filename
 
 
-async def pdf_to_docs(pdf_link , scrape_image , image_model) : 
+async def pdf_to_docs(pdf_link : str , scrape_image : bool , gemini_client) : 
 
     documents = []
 
-    pdf_name = await download_pdf(pdf_link)
+    pdf_name : str = await download_pdf(pdf_link)
 
     py_pdf_object = PyPDF2.PdfReader(pdf_name)
     fi_pdf_object = fitz.open(pdf_name)
@@ -56,9 +56,9 @@ async def pdf_to_docs(pdf_link , scrape_image , image_model) :
             for image in tqdm(images , total = len(images)) : 
 
                 image = fi_pdf_object.extract_image(image[0])
-                image_bytes = image['image'] 
+                image_bytes : bytes = image['image'] 
 
-                response = caption_image(image_bytes , image_model , text)
+                response : str = caption_image(image_bytes , gemini_client , text)
 
                 documents.append(
                     {
