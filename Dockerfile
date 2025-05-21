@@ -1,13 +1,14 @@
-FROM python:3.9
-
-RUN useradd -m -u 1000 user
-USER user
-ENV PATH="/home/user/.local/bin:$PATH"
+FROM python:3.10.10-slim
 
 WORKDIR /app
 
-COPY --chown=user ./requirements.txt requirements.txt
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+COPY . .
 
-COPY --chown=user . /app
+# RUN python3 -m venv venv 
+# RUN source venv/bin/activate
+
+# RUN redis-server
+
+RUN pip install -r requirements.txt
+
 CMD ["python" , "app.py"]

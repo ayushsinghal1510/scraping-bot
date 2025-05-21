@@ -2,7 +2,7 @@ import uvicorn
 
 from dotenv import load_dotenv
 
-from fastapi import FastAPI , Request , HTTPException 
+from fastapi import FastAPI , Request , HTTPException , File , UploadFile
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -22,6 +22,7 @@ from scripts.loader.loader import (
 from scripts.routers.routers import (
     scrape_page_route , 
     scrape_pdf_route , 
+    scrape_pdf__file_route , 
     ask_route , 
     get_sentiment_route , 
     get_token_count_route , 
@@ -104,6 +105,35 @@ async def scrape_page(request : Request) -> None :
         scrape_images
     )
 
+@app.post('/scrape-pdf-file')
+async def scrape_pdf_file(request : Request , file : UploadFile = File(...)) -> None :
+
+    request = await request.json()
+    contents = await file.read()
+    filename = str(file.filename)
+
+    scrape_images = request.get('scrape-images')
+    
+    if (
+        not contents or 
+        not (
+            scrape_images == False or 
+            scrape_images == True
+        )
+    ) : raise HTTPException(
+        status_code = 400 , 
+        detail = 'Correct Params was not supplied'
+    )
+    
+    await scrape_pdf__file_route(
+        filename , 
+        contents , 
+        embedding_model , 
+        milvus_client , 
+        gemini_client , 
+        url_redis_client ,  
+        scrape_images
+    )
 
 @app.post('/scrape-pdf')
 async def scrape_pdf(request : Request) -> None :

@@ -4,7 +4,7 @@ import json
 from datetime import datetime 
 
 from scripts.scrapper.page import page_to_docs
-from scripts.scrapper.pdf import pdf_to_docs
+from scripts.scrapper.pdf import pdf_to_docs , pdf_file_to_docs
 from scripts.llm.runner import run_groq
 
 from scripts.llm.services import save_history , load_history
@@ -68,7 +68,7 @@ async def scrape_page_route(
     if len(documents) > 100_000 : print(f'Warning: Document from {url} had {len(documents)} chunks, but only processed 100_000 ')
     
     url_redis_client.set(url , json.dumps(ids))
-        
+
 async def scrape_pdf_route(
     url : str , 
     embedding_model : SentenceTransformer , 
@@ -117,6 +117,58 @@ async def scrape_pdf_route(
     if len(documents) > 100_000 : print(f'Warning: Document from {url} had {len(documents)} chunks, but only processed 100_000 ')
     
     url_redis_client.set(url , json.dumps(ids))
+    
+async def scrape_pdf__file_route(
+    filename : str , 
+    contents : bytes , 
+    embedding_model : SentenceTransformer , 
+    milvus_client : MilvusClient , 
+    image_model , 
+    url_redis_client : Redis , 
+    scrape_images : bool = False
+) -> None : 
+    
+    url_prefix : int = await hash_url(filename)
+    _ : None = await clean_redis(
+        filename , 
+        url_redis_client , 
+        milvus_client
+    )
+    
+    chunk_counter = 1  
+
+    collection_name = os.getenv('MILVUS_COLLECTION_NAME' , 'd1')
+    
+    with open(f'assets/pdfs/{filename}' , 'wb') as pdf_file : pdf_file.write(contents)
+    
+    documents : list = await pdf_file_to_docs(filename , scrape_images , image_model)
+
+    texts = [document['text'] for document in documents]
+    embeddings : np.ndarray = embedding_model.encode(texts[ : 100_000] , show_progress_bar = True)
+    ids = []
+
+    for document , embedding in zip(documents , embeddings) : 
+
+        id_ = url_prefix * 100_000 + chunk_counter
+        chunk_counter += 1
+        
+        ids.append(id_)
+
+        data = {
+            'id' : id_ ,
+            'vector' : embedding
+        }
+
+        for key , value in zip(document.keys() , document.values()) : data[key] = value
+
+        milvus_client.insert(
+            collection_name = collection_name , 
+            data = [data]
+        )
+        
+    if len(documents) > 100_000 : print(f'Warning: Document from {filename} had {len(documents)} chunks, but only processed 100_000 ')
+    
+    url_redis_client.set(filename , json.dumps(ids))
 
 async def ask_route(
     query : str , 
