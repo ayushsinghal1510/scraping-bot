@@ -41,8 +41,11 @@ Construct your textual output strictly adhering to the following structure, usin
 
 *   **Analyze:** Based on the provided `{topic}` and `{specific_focus}`, determine the most fitting category/categories.
 *   **Allowed Categories:** You **must** choose from the following list only:
-    *   `satellite`
-    *   `general_question`
+    * Data Products, Services and Policies
+    * EO Missions
+    * Applications 
+    * Remote Sensing and GIS
+    * International Collaboration and Cooperation
 *   **Selection:** You can select one or multiple categories if applicable. If unsure or if it doesn't fit well, lean towards `general_question`. Do not use any categories not present in this list.
 
 **Part 3: Final Output Format**

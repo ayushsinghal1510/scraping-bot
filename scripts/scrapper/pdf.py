@@ -72,12 +72,11 @@ async def pdf_to_docs(pdf_link : str , scrape_image : bool , gemini_client) :
 
     return documents
 
-async def pdf_file_to_docs(pdf_name : str , scrape_image : bool , gemini_client) : 
+async def pdf_file_to_docs(pdf_name : str) : 
 
     documents = []
 
     py_pdf_object = PyPDF2.PdfReader(pdf_name)
-    fi_pdf_object = fitz.open(pdf_name)
 
     num_pages = len(py_pdf_object.pages)
 
@@ -99,26 +98,5 @@ async def pdf_file_to_docs(pdf_name : str , scrape_image : bool , gemini_client)
             if chunk
         ])
 
-        if scrape_image : 
-
-            page = fi_pdf_object.load_page(num_pages)
-            images = page.get_images(full = True)
-
-            for image in tqdm(images , total = len(images)) : 
-
-                image = fi_pdf_object.extract_image(image[0])
-                image_bytes : bytes = image['image'] 
-
-                response : str = caption_image(image_bytes , gemini_client , text)
-
-                documents.append(
-                    {
-                        'type' : 'image' , 
-                        'text' : response , 
-                        'souce' : pdf_name , 
-                        'raw_source' : image_bytes , 
-                        'type' : 'image'
-                    }
-                )
 
     return documents

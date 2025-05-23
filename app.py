@@ -106,21 +106,12 @@ async def scrape_page(request : Request) -> None :
     )
 
 @app.post('/scrape-pdf-file')
-async def scrape_pdf_file(request : Request , file : UploadFile = File(...)) -> None :
+async def scrape_pdf_file(file : UploadFile = File(...)) -> None :
 
-    request = await request.json()
     contents = await file.read()
     filename = str(file.filename)
-
-    scrape_images = request.get('scrape-images')
     
-    if (
-        not contents or 
-        not (
-            scrape_images == False or 
-            scrape_images == True
-        )
-    ) : raise HTTPException(
+    if not contents : raise HTTPException(
         status_code = 400 , 
         detail = 'Correct Params was not supplied'
     )
@@ -130,9 +121,7 @@ async def scrape_pdf_file(request : Request , file : UploadFile = File(...)) -> 
         contents , 
         embedding_model , 
         milvus_client , 
-        gemini_client , 
-        url_redis_client ,  
-        scrape_images
+        url_redis_client ,
     )
 
 @app.post('/scrape-pdf')
@@ -141,7 +130,7 @@ async def scrape_pdf(request : Request) -> None :
     request = await request.json()
 
     url = request.get('url')
-    scrape_images = request.get('scrape-images')
+    scrape_images = request.get('scrape-image')
     
     if (
         not url or 

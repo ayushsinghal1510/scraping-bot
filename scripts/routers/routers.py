@@ -123,11 +123,9 @@ async def scrape_pdf__file_route(
     contents : bytes , 
     embedding_model : SentenceTransformer , 
     milvus_client : MilvusClient , 
-    image_model , 
-    url_redis_client : Redis , 
-    scrape_images : bool = False
+    url_redis_client : Redis ,
 ) -> None : 
-    
+
     url_prefix : int = await hash_url(filename)
     _ : None = await clean_redis(
         filename , 
@@ -138,10 +136,11 @@ async def scrape_pdf__file_route(
     chunk_counter = 1  
 
     collection_name = os.getenv('MILVUS_COLLECTION_NAME' , 'd1')
+    filename = f'assets/pdfs/{filename}' 
     
-    with open(f'assets/pdfs/{filename}' , 'wb') as pdf_file : pdf_file.write(contents)
+    with open(filename , 'wb') as pdf_file : pdf_file.write(contents)
     
-    documents : list = await pdf_file_to_docs(filename , scrape_images , image_model)
+    documents : list = await pdf_file_to_docs(filename)
 
     texts = [document['text'] for document in documents]
     embeddings : np.ndarray = embedding_model.encode(texts[ : 100_000] , show_progress_bar = True)
@@ -259,8 +258,10 @@ async def get_sentiment_route(db_redis_client : Redis) -> dict :
             nqueries_['sentiment'].append(data['sentiment'])
 
         except Exception as e : print(e)
-
-    return nqueries 
+    
+    
+    
+    return nqueries_
 
 async def get_token_count_route(db_redis_client : Redis) -> dict : 
     
