@@ -33,6 +33,7 @@ async def get_pdf_links(base_html) :
 
     pdf_links = []
     all_links = set()
+    all_links.add(base_html)
 
     visited_urls = set()
     

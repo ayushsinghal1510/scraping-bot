@@ -12,7 +12,7 @@ async def download_pdf(pdf_link : str) -> str :
 
     filename = os.path.basename(pdf_link)
 
-    with open(filename , 'wb') as pdf_file :  # ! Save in folder
+    with open(f'assets/pdfs/{filename}' , 'wb') as pdf_file :  # ! Save in folder
 
         for chunk in response.iter_content(chunk_size = 8192) : pdf_file.write(chunk)
 

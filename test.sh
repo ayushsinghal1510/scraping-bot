@@ -6,7 +6,7 @@ curl https://8888-01jvz3v9phphmvq0twsmakz8zy.cloudspaces.litng.ai/
 curl -X POST https://8888-01jvz3v9phphmvq0twsmakz8zy.cloudspaces.litng.ai/scrape-url \
 -H "Content-Type: application/json" \
 -d '{
-        "url": "https://voicexp.ai/",
+        "url": "https://www.nrsc.gov.in/Knowledge_EBooks/",
     }'
 
 # Scrape Page Endpoint (/scrape-page)
