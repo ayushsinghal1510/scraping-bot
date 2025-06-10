@@ -51,7 +51,10 @@ async def get_pdf_links(base_html) :
 
             async for link in process_page(current_url) : 
 
-                if link.endswith('pdf') : pdf_links.append(link)
+                if link.endswith('pdf') : 
+                    if not link.startswith('http') : link = f'{base_html}{link}'
+                    
+                    pdf_links.append(link)
                 else :
 
                     absolute_url = urljoin(current_url , link)
