@@ -10,8 +10,6 @@ async def create_soup(url : str) -> BeautifulSoup :
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.content , 'html.parser')
-    
-    # print(type(soup))
 
     return soup
 

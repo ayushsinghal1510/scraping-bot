@@ -46,7 +46,7 @@ Construct your textual output strictly adhering to the following structure, usin
     * Applications 
     * Remote Sensing and GIS
     * International Collaboration and Cooperation
-    * General Questions
+    * General Questions( General chat like, Hey, how are you doing etc, or any other that misses the other category)
 *   **Selection:** You can select one or multiple categories if applicable. If unsure or if it doesn't fit well, lean towards `general_question`. Do not use any categories not present in this list.
 
 **Part 3: Final Output Format**

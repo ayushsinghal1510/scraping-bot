@@ -31,13 +31,6 @@ def load_milvus_client() -> MilvusClient:
 
     milvus_client = MilvusClient(db_name)
     milvus_client.create_collection(collection_name = collection_name , dimension = vector_size)
-    
-    # collection = Collection(collection_name)
-
-    # if collection.is_empty : num_rows = 0
-    # else : num_rows = collection.num_entities
-
-    num_rows = 0
 
     return milvus_client
 
@@ -67,7 +60,7 @@ def load_gemini_client() :
     if not gemini_api_key : model = ''
     else : 
         genai.configure(api_key = '<Enter the Gemini API Key here>') # ! Can deploy a Llama 3.2 Model and use that instead, which can increase speed and avoid rate limits and increase safety as well
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel(os.getenv('GEMINI_API_KEY' , 'gemini-1.5-flash'))
         
     return model
 
