@@ -5,27 +5,42 @@ from collections import deque
 
 from scripts.services.services import process_link
 
-async def create_soup(url : str) -> BeautifulSoup : 
+import requests
+from bs4 import BeautifulSoup
+from requests.exceptions import ProxyError , ConnectionError , Timeout , RequestException
 
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content , 'html.parser')
+async def create_soup(url : str) -> BeautifulSoup | str :
 
-    return soup
+    try : 
+
+        response = requests.get(url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content , 'html.parser')
+
+        return soup
+    
+    except ProxyError : return 'ProxyError'
+    except ConnectionError : return 'Connection Error'
+    except Timeout : return 'Request Timeout'
+    except RequestException : return 'Request Exception'
+    except Exception : return 'Unexpected Error'
 
 async def process_page(url : str) : 
 
-    soup : BeautifulSoup = await create_soup(url)
+    soup : BeautifulSoup | str = await create_soup(url)
+    
+    if not isinstance(soup , str) : 
 
-    links = soup.find_all('a' , href = True)
+        links = soup.find_all('a' , href = True)
 
-    for a_tag in links : 
+        for a_tag in links : 
 
-        href = a_tag['href']
+            href = a_tag['href']
 
-        href = await process_link(href)
+            href = await process_link(href)
 
-        if href : yield href
+            if href : yield href
 
 async def get_pdf_links(base_html) : 
 
@@ -50,9 +65,11 @@ async def get_pdf_links(base_html) :
             async for link in process_page(current_url) : 
 
                 if link.endswith('pdf') : 
+                    
                     if not link.startswith('http') : link = f'{base_html}{link}'
                     
                     pdf_links.append(link)
+                
                 else :
 
                     absolute_url = urljoin(current_url , link)

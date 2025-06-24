@@ -30,39 +30,42 @@ async def page_to_docs(url : str , image_model , scrape_image = False) -> list :
     documents = []
 
     soup = await create_soup(url)
+    if not isinstance(soup , str) : 
 
-    text_content = soup.get_text(separator = '\n' , strip = True)
-    text_chunks = text_content.split(' ')
+        text_content = soup.get_text(separator = '\n' , strip = True)
+        text_chunks = text_content.split(' ')
 
-    text_chunks = [' '.join(text_chunks[index : index + 512]) for index in range(0 , len(text_content) , 512)]
+        text_chunks = [' '.join(text_chunks[index : index + 512]) for index in range(0 , len(text_content) , 512)]
 
-    documents.extend([
-        {
-            'type' : 'text' , 
-            'text' : chunk , 
-            'source' : url , 
-            'raw_source' : url , 
-            'type' : 'url'
-        } for chunk in text_chunks
-        if chunk
-    ])
+        documents.extend([
+            {
+                'type' : 'text' , 
+                'text' : chunk , 
+                'source' : url , 
+                'raw_source' : url , 
+                'type' : 'url'
+            } for chunk in text_chunks
+            if chunk
+        ])
 
-    if scrape_image : 
+        if scrape_image : 
 
-        async for img_url in get_images(soup , url) :
+            async for img_url in get_images(soup , url) :
 
-            image_bytes : bytes = await image_to_bytes(img_url)
+                image_bytes : bytes = await image_to_bytes(img_url)
 
-            response : str = caption_image(image_bytes , image_model , text_content)
+                response : str = caption_image(image_bytes , image_model , text_content)
 
-            documents.append(
-                {
-                    'type' : 'image' , 
-                    'text' : response , 
-                    'souce' : img_url , 
-                    'raw_source' : image_bytes , 
-                    'type' : 'image'
-                }
-            )
+                documents.append(
+                    {
+                        'type' : 'image' , 
+                        'text' : response , 
+                        'souce' : img_url , 
+                        'raw_source' : image_bytes , 
+                        'type' : 'image'
+                    }
+                )
 
-    return documents
+        return documents
+    
+    return [soup]

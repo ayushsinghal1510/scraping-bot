@@ -77,7 +77,7 @@ async def scrape_url(request : Request) -> dict :
     }
 
 @app.post('/scrape-page')
-async def scrape_page(request : Request) -> None : 
+async def scrape_page(request : Request) -> None | dict : 
 
     request = await request.json()
 
@@ -95,7 +95,7 @@ async def scrape_page(request : Request) -> None :
         detail = 'Correct Params was not supplied'
     )
 
-    await scrape_page_route(
+    status : None | str = await scrape_page_route(
         url , 
         embedding_model , 
         milvus_client , 
@@ -103,6 +103,8 @@ async def scrape_page(request : Request) -> None :
         url_redis_client ,  
         scrape_images
     )
+    
+    if isinstance(status , str) : return {'status' : status}
 
 @app.post('/scrape-pdf-file')
 async def scrape_pdf_file(file : UploadFile = File(...)) -> None :
