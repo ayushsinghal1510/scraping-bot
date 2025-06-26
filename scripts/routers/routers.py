@@ -42,7 +42,7 @@ async def scrape_page_route(
     
     documents : list = await page_to_docs(url , scrape_images , image_model)
     
-    if isinstance(documents[0] , str) : 
+    if not isinstance(documents[0] , str) : 
 
         texts = [document['text'] for document in documents]
         embeddings : np.ndarray = embedding_model.encode(texts[ : 100_000] , show_progress_bar = True)
