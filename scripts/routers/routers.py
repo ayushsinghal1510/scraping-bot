@@ -80,7 +80,7 @@ async def scrape_pdf_route(
     image_model , 
     url_redis_client : Redis , 
     scrape_images : bool = False
-) -> None : 
+) -> None | int : 
     
     url_prefix : int = await hash_url(url)
     _ : None = await clean_redis(
@@ -93,34 +93,38 @@ async def scrape_pdf_route(
 
     collection_name = os.getenv('MILVUS_COLLECTION_NAME' , 'd1')
     
-    documents : list = await pdf_to_docs(url , scrape_images , image_model)
-
-    texts = [document['text'] for document in documents]
-    embeddings : np.ndarray = embedding_model.encode(texts[ : 100_000] , show_progress_bar = True)
-    ids = []
-
-    for document , embedding in zip(documents , embeddings) : 
-
-        id_ = url_prefix * 100_000 + chunk_counter
-        chunk_counter += 1
-        
-        ids.append(id_)
-
-        data = {
-            'id' : id_ ,
-            'vector' : embedding
-        }
-
-        for key , value in zip(document.keys() , document.values()) : data[key] = value
-
-        milvus_client.insert(
-            collection_name = collection_name , 
-            data = [data]
-        )
-        
-    if len(documents) > 100_000 : print(f'Warning: Document from {url} had {len(documents)} chunks, but only processed 100_000 ')
+    documents : list | None = await pdf_to_docs(url , scrape_images , image_model)
     
-    url_redis_client.set(url , json.dumps(ids))
+    if documents : 
+
+        texts = [document['text'] for document in documents]
+        embeddings : np.ndarray = embedding_model.encode(texts[ : 100_000] , show_progress_bar = True)
+        ids = []
+
+        for document , embedding in zip(documents , embeddings) : 
+
+            id_ = url_prefix * 100_000 + chunk_counter
+            chunk_counter += 1
+            
+            ids.append(id_)
+
+            data = {
+                'id' : id_ ,
+                'vector' : embedding
+            }
+
+            for key , value in zip(document.keys() , document.values()) : data[key] = value
+
+            milvus_client.insert(
+                collection_name = collection_name , 
+                data = [data]
+            )
+            
+        if len(documents) > 100_000 : print(f'Warning: Document from {url} had {len(documents)} chunks, but only processed 100_000 ')
+        
+        url_redis_client.set(url , json.dumps(ids))
+        
+    return 404
     
 async def scrape_pdf__file_route(
     filename : str , 

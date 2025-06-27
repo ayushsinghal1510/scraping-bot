@@ -103,8 +103,11 @@ async def scrape_page(request : Request) -> None | dict :
         url_redis_client ,  
         scrape_images
     )
-    
-    if isinstance(status , str) : return {'status' : status}
+
+    if isinstance(status , str) : raise HTTPException(
+        status_code = 404 , 
+        detail = status
+    )
 
 @app.post('/scrape-pdf-file')
 async def scrape_pdf_file(file : UploadFile = File(...)) -> None :
@@ -145,13 +148,18 @@ async def scrape_pdf(request : Request) -> None :
         detail = 'Correct Params was not supplied'
     )
 
-    await scrape_pdf_route(
+    status : int | None = await scrape_pdf_route(
         url , 
         embedding_model , 
         milvus_client , 
         gemini_client , 
         url_redis_client ,  
         scrape_images
+    )
+    
+    if status == 404 : raise HTTPException(
+        status_code = 404 , 
+        detail = 'PDF not found'
     )
 
 @app.post('/ask') 

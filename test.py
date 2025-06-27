@@ -37,10 +37,10 @@ from tqdm import tqdm
 # print(json.dumps(response.json() , indent = 4))
 
 response = requests.post(
-    'http://localhost:8888/scrape-page' , 
+    'http://localhost:8888/scrape-pdf' , 
     json = {
-        'url' : 'www.dwedsf.com' , 
-        'scrape-images' : False
+        'url' : 'www.dwedsf.pdf' , 
+        'scrape-image' : False
     }
 )
 
