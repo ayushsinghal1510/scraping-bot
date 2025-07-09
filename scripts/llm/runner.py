@@ -37,3 +37,7 @@ async def run_model(messages : list , client : dict) -> str :
     full_response_content = response.json()['choices'][0]['message']['content']
 
     return full_response_content
+
+async def img_captionising_tgi(messages : list , client : dict) -> str : 
+
+    raise NotImplementedError('Currently Not Implemeneted')
