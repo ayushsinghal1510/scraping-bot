@@ -21,10 +21,6 @@ async def create_soup(url : str) -> BeautifulSoup | str :
         return soup
     
     except ProxyError : return 'ProxyError'
-    except ConnectionError : return 'Connection Error'
-    except Timeout : return 'Request Timeout'
-    except RequestException : return 'Request Exception'
-    except Exception : return 'Unexpected Error'
 
 async def process_page(url : str) : 
 
