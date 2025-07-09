@@ -7,7 +7,7 @@ from scripts.services.services import process_link
 
 import requests
 from bs4 import BeautifulSoup
-from requests.exceptions import ProxyError , ConnectionError , Timeout , RequestException
+from requests.exceptions import ConnectionError , Timeout , RequestException
 
 async def create_soup(url : str) -> BeautifulSoup | str :
 
@@ -19,8 +19,11 @@ async def create_soup(url : str) -> BeautifulSoup | str :
         soup = BeautifulSoup(response.content , 'html.parser')
 
         return soup
+
+    except ConnectionError : return 'Connection Error'
+    except Timeout : return 'Request Timeout'
+    except RequestException : return 'Request Exception'
     
-    except ProxyError : return 'ProxyError'
 
 async def process_page(url : str) : 
 
