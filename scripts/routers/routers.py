@@ -71,6 +71,8 @@ async def scrape_page_route(
         
         url_redis_client.set(url , json.dumps(ids))
         
+        return None
+        
     return documents[0]
 
 async def scrape_pdf_route(
@@ -123,6 +125,8 @@ async def scrape_pdf_route(
         if len(documents) > 100_000 : print(f'Warning: Document from {url} had {len(documents)} chunks, but only processed 100_000 ')
         
         url_redis_client.set(url , json.dumps(ids))
+        
+        return None
         
     return 404
     

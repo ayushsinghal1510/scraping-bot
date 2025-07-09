@@ -39,7 +39,7 @@ from tqdm import tqdm
 response = requests.post(
     'http://localhost:8888/scrape-pdf' , 
     json = {
-        'url' : 'www.dwedsf.pdf' , 
+        'url' : 'https://www.isro.gov.in//media_isro/pdf/GSLVF15/GSLV-F15_NVS-02_EngBrochure240125.pdf' , 
         'scrape-image' : False
     }
 )
