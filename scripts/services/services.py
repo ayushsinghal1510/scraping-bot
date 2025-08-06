@@ -1,20 +1,23 @@
-async def process_link(href) : 
-
+async def process_link(href):
     if (
         href and 
-        isinstance(href , str) and  
+        isinstance(href, str) and  
         not href.startswith('mailto:') and
-        not href.endswith('png') and 
-        not href.endswith('jpg') and
-        not href.endswith('jpeg') and
-        not href.endswith('gif') and
-        not href.endswith('bmp') and
-        not href.endswith('tiff') and
-        not href.endswith('svg') and
-        not href.endswith('webp') and 
-        not href.endswith('webm') and
-        not href.endswith('mp4') # ! Add conditions as needed 
-    ) : return href
+
+        # Exclude media/image/video formats
+        not href.endswith(('png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'svg', 'webp', 'webm', 'mp4')) and
+        
+        # Exclude links containing non-textual content markers
+        'folder' not in href.lower() and 
+        'upload' not in href.lower() and 
+        'album' not in href.lower() and 
+        'image' not in href.lower() and 
+        'video' not in href.lower() and 
+        'file' not in href.lower() and 
+        'download' not in href.lower() and 
+        'static' not in href.lower() and
+        'media' not in href.lower()
+    ):
+        return href
 
     return None
-
