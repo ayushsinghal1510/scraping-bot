@@ -200,7 +200,7 @@ async def ask_route(
     results : list = milvus_client.search(
         collection_name = collection_name , 
         data = [query_embeddings] , 
-        limit = 2 , 
+        limit = 10 , 
         output_fields = ['text' , 'source']
     )[0]
 
