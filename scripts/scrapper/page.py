@@ -32,10 +32,11 @@ async def page_to_docs(url : str , image_model , scrape_image = False) -> list :
     soup = await create_soup(url)
     if not isinstance(soup , str) : 
 
-        text_content = soup.get_text(separator = '\n' , strip = True)
-        text_chunks = text_content.split(' ')
+        paragraphs = soup.find_all('p')
+        paragraph_content = ''.join([p.get_text(separator=' ', strip=True) for p in paragraphs])
+        text_chunks = paragraph_content.split(' ')
 
-        text_chunks = [' '.join(text_chunks[index : index + 512]) for index in range(0 , len(text_content) , 512)]
+        text_chunks = [' '.join(text_chunks[index : index + 512]) for index in range(0 , len(paragraph_content) , 512)]
 
         documents.extend([
             {
