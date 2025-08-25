@@ -26,7 +26,7 @@ def load_milvus_client() -> MilvusClient:
     
     db_name = os.getenv('MILVUS_DB_NAME' , 'assets/database/vectordb/demo.db')
 
-    vector_size = int(os.getenv('MILVUS_MODEL_SIZE' , 384))
+    vector_size = int(os.getenv('MILVUS_VECTOR_SIZE' , 384))
     collection_name = os.getenv('MILVUS_COLLECTION_NAME' , 'd1')
 
     milvus_client = MilvusClient(db_name)
@@ -47,7 +47,7 @@ def load_redis_client(db_name : int) -> Redis :
 
 def load_embedding_model(model_name = '') -> SentenceTransformer : 
     
-    if not model_name : model_name = os.getenv('EMBEDDING_MODEL_NAME' , 'all-MiniLM-L6-v2')
+    if not model_name : model_name = os.getenv('MILVUS_MODEL_NAME' , 'all-MiniLM-L6-v2')
     
     embedding_model = SentenceTransformer(model_name)
     
