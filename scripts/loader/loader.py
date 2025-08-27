@@ -26,7 +26,7 @@ def load_milvus_client() -> MilvusClient:
     
     db_name = os.getenv('MILVUS_DB_NAME' , 'assets/database/vectordb/demo.db')
 
-    vector_size = int(os.getenv('MILVUS_VECTOR_SIZE' , 384))
+    vector_size = int(os.getenv('MILVUS_VECTOR_SIZE' , 768))
     collection_name = os.getenv('MILVUS_COLLECTION_NAME' , 'd1')
 
     milvus_client = MilvusClient(db_name)
