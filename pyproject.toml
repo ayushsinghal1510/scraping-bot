@@ -1,0 +1,49 @@
+[project]
+name = "scraping-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+    "fastapi>=0.121.1",
+    "google>=3.0.0",
+    "google-genai>=1.49.0",
+    "groq>=0.33.0",
+    "logging>=0.4.9.6",
+    "pymilvus>=2.6.3",
+    "python-dotenv>=1.2.1",
+    "pyyaml>=6.0.3",
+    "redis>=7.0.1",
+    "requests>=2.32.5",
+    "sentence-transformers>=5.1.2",
+    "transformers>=4.57.1",
+    "uvicorn>=0.38.0",
+    "effdet>=0.4.1",
+    "fastapi>=0.118.0",
+    "google-cloud-vision>=3.10.2",
+    "milvus-lite>=2.5.1",
+    "onnx>=1.19.1",
+    "onnxruntime>=1.23.1",
+    "pdf2image>=1.17.0",
+    "pdfminer-six>=20250506",
+    "pi-heif>=1.1.1",
+    "pikepdf>=9.11.0",
+    "pymilvus>=2.6.2",
+    "pypdf>=6.1.1",
+    "python-dotenv>=1.1.1",
+    "sentence-transformers>=5.1.1",
+    "tqdm>=4.67.1",
+    "unstructured>=0.18.15",
+    "unstructured-inference>=1.0.5",
+    "unstructured-pytesseract>=0.3.15",
+    "uvicorn>=0.37.0",
+]
+
+[project.scripts]
+scraping-bot = "scraping_bot.app:main"
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"

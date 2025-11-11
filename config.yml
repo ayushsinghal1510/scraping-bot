@@ -1,0 +1,90 @@
+vector-db : 
+  db-path : assets/database/vectordb/samved_data.db
+  vector-size : 768
+  collection-name : d2
+
+embedding : 
+  model-name : BAAI/bge-base-en-v1.5
+
+redis : 
+  chat : 
+    host : localhost
+    port : 6379
+    db-name : 0
+  url : 
+    host : localhost
+    port : 6379
+    db-name : 1
+  db : 
+    host : localhost
+    port : 6379
+    db-name : 2
+
+google : 
+  model-name : gemini-1.5-flash
+
+groq : 
+  model-name : 
+  
+sentiment : 
+  task : sentiment-analysis
+  model-name : distilbert-base-uncased-finetuned-sst-2-english
+
+tokenizer : 
+  model-name : meta-llama/Meta-Llama-3-8B
+
+logger : 
+  color : 
+    debug : '\x1b[33m'
+    info : '\x1b[34m'
+    warning : '\x1b[38;5;208m'
+    error : '\x1b[31m'
+    critical : '\x1b[31;1m'
+    reset : '\x1b[0m'
+  log-format : '%(asctime)s - %(levelname)s - %(message)s'
+  date-format : '%Y-%m-%d %H:%M:%S'
+
+fast-api : 
+  port : 8888 
+  host : 0.0.0.0
+  reload : False
+  cors : 
+    allowed-origins : ['*']
+    allowed-credentials : True
+    allowed-methods : ['*'] 
+    allowed-headers : ['*']
+
+website : 
+  sitemap : 
+    session-headers : 
+      User-Agent : Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+    namespaces : 
+      index : 
+        sitemap : http://www.sitemaps.org/schemas/sitemap/0.9
+        sitemapindex : http://www.sitemaps.org/schemas/sitemap/0.9
+      general : 
+        sitemap : http://www.sitemaps.org/schemas/sitemap/0.9
+        news : http://www.google.com/schemas/sitemap-news/0.9
+        image : http://www.google.com/schemas/sitemap-image/1.1
+        video : http://www.google.com/schemas/sitemap-video/1.1
+    timeout : 30
+  chunk-size : 500
+  min-word-count : 30
+  embedding-dimension : 384
+
+  bad-characs : [
+    copyright , 
+    rights reserved , 
+    ugc act , 
+  ]
+
+  link-exclusions : [
+    # 'mailto:'
+    png , jpg , jpeg , gif , bmp , tiff , svg , webp , album , playlist , image
+    webm , mp4 , video , 
+    folder , upload , file , download , static , media , gallery
+  ]
+
+pdf : 
+  chunk-size : 500
+  embedding-dimension : 384
