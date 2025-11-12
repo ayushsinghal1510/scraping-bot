@@ -20,6 +20,8 @@ from logging import (
 
 from google.genai import Client
 
+from ..llm import GROQ , GEMINI
+
 from transformers.pipelines.base import Pipeline
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -59,7 +61,10 @@ def load_embedding_model(config : dict) -> SentenceTransformer : return Sentence
 
 def load_gemini_client() -> Client : return Client(api_key=os.environ['GEMINI_API_KEY'])
 
-def load_groq_client() -> Groq : return Groq(api_key = os.environ['GROQ_API_KEY'])
+def load_groq_client(config : dict , logger : Logger) -> GROQ : return GROQ(
+    config = config['groq'] , 
+    logger = logger
+)
 
 class ColoredFormatter(Formatter) : 
 
@@ -147,12 +152,14 @@ def load_all_clients() -> tuple[
     Redis , Redis , Redis , 
     SentenceTransformer , 
     Client , 
-    Groq , 
+    GROQ , 
     FastAPI , 
     Logger
 ]: 
 
     with open('config.yml') as config_file : config : dict = yaml.safe_load(config_file)
+
+    logger : Logger = load_logger(config = config['logger'])
 
     sentiment_pipeline : Pipeline = load_sentiment_pipeline(config = config['sentiment'])
     tokenizer : PreTrainedTokenizerFast = load_tokenizer(config = config['tokenizer'])
@@ -162,10 +169,12 @@ def load_all_clients() -> tuple[
     url_redis_client : Redis = load_redis_client(config = config['redis']['url'])
     embedding_model : SentenceTransformer = load_embedding_model(config = config['embedding'])
     gemini_client : Client = load_gemini_client()
-    groq_client : Groq = load_groq_client()
+    groq_client : GROQ = load_groq_client(
+        config = config['llm'] , 
+        logger = logger
+    )
 
     fast_api : FastAPI = load_fastapi(config = config['fast-api'])
-    logger : Logger = load_logger(config = config['logger'])
 
     return (
         config , 

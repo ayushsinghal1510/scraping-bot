@@ -9,7 +9,8 @@ from fastapi import HTTPException, Request
 from .scripts import (
     load_all_clients , 
 
-    WEB , PDF
+    WEB , PDF , 
+    INFERENCE
 )
 
 load_dotenv()
@@ -28,6 +29,14 @@ load_dotenv()
     app , 
     logger
 ) = load_all_clients()
+
+inference_client : INFERENCE = INFERENCE(
+    milvus_client = milvus_client , 
+    chat_redis_client = chat_redis_client , 
+    embedding_model = embedding_model , 
+    config = config['inference'] , 
+    groq_client = groq_client
+)
 
 @app.post('/scrape-url')
 async def scrape_url(request : Request) -> dict : 
@@ -101,6 +110,26 @@ async def scrape_pdf(request : Request) :
     )
 
     pdf()
+
+@app.post('/ask')
+async def ask(request : Request) : 
+
+    data : dict = await request.json()
+
+    if (
+        'query' not in data and 
+        'session_id' not in data
+    ) : raise HTTPException(
+        status_code = 400 , 
+        detail = 'Correct params was not supplied'
+    )
+
+    response : str = await inference_client(
+        query = data['query'] , 
+        session_id = data['session_id']
+    )
+
+    print(response)
 
 
 def main() : uvicorn.run(

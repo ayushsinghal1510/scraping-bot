@@ -43,20 +43,16 @@ class GROQ(LLM) :
             Calls the run_model method with the provided messages and returns the response as a string.
     '''
 
-    def __init__(self , env_path : str , config : dict , logger : Logger) -> None : 
+    def __init__(self , config : dict , logger : Logger) -> None : 
 
         super().__init__()
 
-        load_dotenv(env_path)
         self.config = config
 
         self.client : Groq = Groq(api_key = os.getenv('GROQ_API_KEY'))
 
         self.model = config['model-name']
         self.dict_converter = config['preprocess']['dict-converter']
-        self.base_system_prompt_file : str = config['base-system-prompt-file-path']
-
-        with open(self.base_system_prompt_file) as base_system_prompt_file : self.base_system_prompt : str = base_system_prompt_file.read()
 
         self.logger = logger
 

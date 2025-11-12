@@ -88,3 +88,15 @@ website :
 pdf : 
   chunk-size : 500
   embedding-dimension : 384
+
+llm : 
+  groq : 
+    model-name : llama-3.3-70b-versatile
+    preprocess : 
+      dict-converter : ast 
+
+inference : 
+  system-prompt-path : assets/prompts/base.md
+  search-top-k : 5
+  allowed-domains : [https://www.nrsc.gov.in/nrscnew/]
+  vector-top-k : 5
