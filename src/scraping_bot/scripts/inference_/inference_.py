@@ -75,6 +75,7 @@ class INFERENCE :
             You are a linguistic normalization engine for web queries.
             Expand the query to include synonyms, morphological variants, prepositional changes, 
             active/passive alternations, and pragmatic paraphrases while keeping domain focus (ISRO, space, satellites, missions).
+            Always return a single line query that contains all the variants
         '''
 
         response : str = await self.groq_client(
@@ -152,6 +153,8 @@ class INFERENCE :
             max_results = self.config['search-top-k']
         )]
 
+        print(results)
+
         page_infos : list[dict] = []
 
         for item in results[:self.config['search-top-k']] : 
@@ -159,8 +162,8 @@ class INFERENCE :
             url = item.get('url') or item.get('link')
 
             if (
-                url and 
-                any(d in url for d in self.config['allowed-domains'])
+                url 
+                # any(d in url for d in self.config['allowed-domains'])
             ) : 
 
                 text , last_modified_data = '' , None
@@ -175,6 +178,8 @@ class INFERENCE :
                 })
 
         sorted_pages = sorted(page_infos , key = lambda x : x["last_modified"])
+
+        print(f'Sorted Pages ---------> : {sorted_pages}')
 
         search_results : str = ''
 
@@ -212,7 +217,7 @@ class INFERENCE :
         self , 
         query : str , 
         session_id : str
-    ) -> str : 
+    ) -> dict : 
 
         history : list[dict[str , str]] = self.get_history(session_id = session_id)
 
@@ -224,7 +229,11 @@ class INFERENCE :
         ]
 
         web_search_results : str = await self.get_web_search_results(query = query)
+
+        print(f'-------------> : {web_search_results}')
         vectordb_results : str = await self.get_vectordb_results(query = query)
+
+        print(f'-------------> VectorDB Results : {vectordb_results}')
 
         history.append(
             {
@@ -239,12 +248,12 @@ class INFERENCE :
             }
         )
 
-        response : str = await self.groq_client(messages = history)
+        response : dict = await self.groq_client.run_model_json(messages = history)
 
         history.append(
             {
                 'role' : 'assistant' , 
-                'content' : response
+                'content' : str(response)
             }
         )
 
@@ -259,7 +268,7 @@ class INFERENCE :
         self , 
         query : str , 
         session_id : str
-    ) -> str : 
+    ) -> dict : 
 
         return await self.forward(
             query = query , 

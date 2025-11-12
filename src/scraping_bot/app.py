@@ -124,12 +124,14 @@ async def ask(request : Request) :
         detail = 'Correct params was not supplied'
     )
 
-    response : str = await inference_client(
+    response : dict = await inference_client(
         query = data['query'] , 
         session_id = data['session_id']
     )
 
     print(response)
+
+    return response
 
 
 def main() : uvicorn.run(

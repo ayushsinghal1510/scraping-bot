@@ -82,6 +82,7 @@ website :
     # 'mailto:'
     png , jpg , jpeg , gif , bmp , tiff , svg , webp , album , playlist , image
     webm , mp4 , video , 
+    '?' , rar , zip , tar , doc
     folder , upload , file , download , static , media , gallery
   ]
 
@@ -99,4 +100,4 @@ inference :
   system-prompt-path : assets/prompts/base.md
   search-top-k : 5
   allowed-domains : [https://www.nrsc.gov.in/nrscnew/]
-  vector-top-k : 5
+  vector-top-k : 15

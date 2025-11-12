@@ -95,10 +95,12 @@ class WEB(INGESTION) :
 
                 return {
                     'pdf_links' : pdf_links , 
-                    'html_links' : all_links
+                    'all_links' : all_links
                 }
 
         self.indexed_urls : list = sitemap_extractor()
+
+        print(self.indexed_urls) # ! Fix thsi 
 
         return self.indexed_urls
 
@@ -194,7 +196,10 @@ class WEB(INGESTION) :
 
                         absolute_url : str = urljoin(current_url , link)
 
-                        if absolute_url.startswith(base_html) : 
+                        if (
+                            absolute_url.startswith(base_html) and 
+                            self.process_link(base_html)
+                        ) : 
 
                             if absolute_url not in visited_urls : 
 
